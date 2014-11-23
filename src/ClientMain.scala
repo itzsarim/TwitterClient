@@ -50,73 +50,49 @@ class ClientActor extends Actor {
 
   def receive = {
 
+    
     case behaviour(msgtype, interval, config , system) =>{
       import system.dispatcher;
       //set this actors behaviour, and depending on dat behaviour send tweet messages(add and fetch)
+      val remote = context.actorFor("akka.tcp://twitterserver@" + config.ipaddress +":5150/user/serverendpoint")
       var tweet: Tweet = null;
+      var userID = 0;
+      var recuradd = 0;
+      var recurfetch = 0;
       if(msgtype == "HF"){
-         var userID = nextInt((config.HFuser * config.clientLoad).toInt );
+        userID = nextInt((config.HFuser * config.clientLoad).toInt );
+        recuradd = interval*config.fetchHF;
+        recurfetch = interval*config.addHF;
+      }
+      if(msgtype == "MF"){
+        userID = nextInt((config.MFuser * config.clientLoad).toInt + 1 ) + (config.HFuser * config.clientLoad).toInt  ;
+        recuradd = interval*config.fetchMF;
+        recurfetch = interval*config.addMF;
+      }
+      if(msgtype == "LF"){
+        userID = nextInt((config.LFuser * config.clientLoad).toInt + 1) + (config.HFuser * config.clientLoad).toInt + (config.MFuser * config.clientLoad).toInt;
+        recuradd = interval*config.fetchLF;
+        recurfetch = interval*config.addLF;
+      }
+
          tweet = new Tweet("abc1234" + userID, "this is tweet from user " + userID, userID, null, null, null, "tweet");
-         val remote = context.actorFor("akka.tcp://twitterserver@" + config.ipaddress +":5150/user/serverendpoint")
-         //remote ! AddTweet(userID, tweet)
+
          val cancellableAddTweet =
         		 		 system.scheduler.schedule(0 milliseconds,
-        				 interval*config.fetchHF  milliseconds,
+        				 recuradd  milliseconds,
         				 remote,
         				 AddTweet(userID, tweet))
          
          val cancellableFetchTweet =
         		 		 system.scheduler.schedule(0 milliseconds,
-        				 interval*config.addHF  milliseconds,
+        				 recurfetch  milliseconds,
         				 remote,
         				fetchUpdate(userID))
         				 
         //cancellableAddTweet .cancel()	
         //cancellableFetchTweet .cancel() 
          
-      }
-      if(msgtype == "MF"){
-        var userID = nextInt((config.MFuser * config.clientLoad).toInt + 1 ) + (config.HFuser * config.clientLoad).toInt  ;
-         tweet = new Tweet("abc1234" + userID, "this is tweet from user " + userID, userID, null, null, null, "tweet");
-         val remote = context.actorFor("akka.tcp://twitterserver@" + config.ipaddress +":5150/user/serverendpoint")
-         //remote ! AddTweet(userID, tweet)
-         val cancellableAddTweet =
-        		 		 system.scheduler.schedule(0 milliseconds,
-        				 interval*config.fetchMF  milliseconds,
-        				 remote,
-        				 AddTweet(userID, tweet))
-         
-         val cancellableFetchTweet =
-        		 		 system.scheduler.schedule(0 milliseconds,
-        				 interval*config.addMF  milliseconds,
-        				 remote,
-        				 fetchUpdate(userID))
-        				 
-        //cancellableAddTweet .cancel()	
-        //cancellableFetchTweet .cancel() 
-        
-      }
-      if(msgtype == "LF"){
-        var userID = nextInt((config.LFuser * config.clientLoad).toInt + 1) + (config.HFuser * config.clientLoad).toInt + (config.MFuser * config.clientLoad).toInt;
-         tweet = new Tweet("abc1234" + userID, "this is tweet from user " + userID, userID, null, null, null, "tweet");
-         val remote = context.actorFor("akka.tcp://twitterserver@" + config.ipaddress +":5150/user/serverendpoint")
-         //remote ! AddTweet(userID, tweet)
-         val cancellableAddTweet =
-        		 		 system.scheduler.schedule(0 milliseconds,
-        				 interval*config.fetchLF  milliseconds,
-        				 remote,
-        				 AddTweet(userID, tweet))
-         
-         val cancellableFetchTweet =
-        		 		 system.scheduler.schedule(0 milliseconds,
-        				 interval*config.addLF  milliseconds,
-        				 remote,
-        				 fetchUpdate(userID))
-        				 
-        //cancellableAddTweet .cancel()	
-        //cancellableFetchTweet .cancel() 
-        
-      }
+    
       
       
     }
