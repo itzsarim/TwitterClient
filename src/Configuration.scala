@@ -11,5 +11,6 @@ class Configuration {
   val fetchMF = 40;
   val addLF = 10;
   val fetchLF = 90;
+  val ipaddress = "192.168.89";
 
 }
