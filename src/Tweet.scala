@@ -1,3 +1,4 @@
+@serializable
 class Tweet(
   var tweetID: String,
   var tweet: String,

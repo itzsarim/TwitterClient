@@ -10,33 +10,33 @@ object ClientMain extends App {
   
   val config = new Configuration;
   val system = ActorSystem("ClientMaster");
-  val master = system.actorOf(Props[ClientActor], name = "client actor");
-  
-  val numberOfActors = 20;
+  val master = system.actorOf(Props[ClientActor], name = "clientactor");
+  val remote = system.actorFor("akka.tcp://twitterserver@" + config.ipaddress +":5150/user/serverendpoint")
+  //remote ! AddTweet(2, new Tweet("abc1234" + 2, "this is tweet from user " + 2, 2, null, null, null, "tweet"))
+  //val numberOfActors = 20;
   //master ! addTweet;
   //master ! fetchTweet;
-  
-
+  val numberOfActors = 20
 
 //spawn only twice as many client actors as many processors in ur system
-for(i <- 1 until numberOfActors ){
+for(i <- 1 until numberOfActors){
   
   // assign clients to HF
   if(i>=0 && i<=config.HFuser * numberOfActors ){
   val  myactor = system.actorOf(Props[ClientActor])
-  myactor ! behaviour("HF",500, config, system); 
+  myactor ! behaviour("HF",50, config, system); 
   }
   
   // assign clients to MF
   if(i>config.HFuser * numberOfActors && i<=(config.HFuser * numberOfActors + config.MFuser  * numberOfActors) ){
   val  myactor = system.actorOf(Props[ClientActor])
-  myactor ! behaviour("MF",500, config , system); 
+  myactor ! behaviour("MF",50, config , system); 
   }
   
   // assign clients to LF
   if(i>(config.HFuser * numberOfActors + config.MFuser  * numberOfActors) && i<=(config.MFuser * numberOfActors + config.LFuser  * numberOfActors) ){
   val  myactor = system.actorOf(Props[ClientActor])
-  myactor ! behaviour("LF",500, config , system); 
+  myactor ! behaviour("LF",50, config , system); 
   }
  
   
@@ -49,7 +49,10 @@ class ClientActor extends Actor {
     //Use system's dispatcher as ExecutionContext
 
   def receive = {
-
+    
+    case FetUpdatesResponse(tweets) => {
+      //println("got something" + tweets.size)
+    }
     
     case behaviour(msgtype, interval, config , system) =>{
       import system.dispatcher;
@@ -91,10 +94,9 @@ class ClientActor extends Actor {
         				 
         //cancellableAddTweet .cancel()	
         //cancellableFetchTweet .cancel() 
-         
-    
-      
-      
+    }
+    case msg: String=>{
+     print("got some unidentified msg")
     }
      
   }
